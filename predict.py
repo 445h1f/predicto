@@ -1,13 +1,12 @@
-from gecko_api import GeckoAPI
+from price_protocols import cryotocompare
 import time
 from mongo_db import *
 import threading
 
 
-
 def printPriceEveryTenSeconds(coin:str, currency:str="usd", tillTime:int=5):
     """Prints price of coin/usd every 10 seconds till given minute of time."""
-    api = GeckoAPI()
+    # api = GeckoAPI()
 
     tillTime *= 60 # converting  time in seconds
 
@@ -19,7 +18,9 @@ def printPriceEveryTenSeconds(coin:str, currency:str="usd", tillTime:int=5):
         timeBeforeApiCall = time.time()
 
         # getting coin price from coingecko api
-        price = api.getCoinPrice(coinID=coin, currency=currency)
+        price = cryotocompare.getCoinPrice(coin=coin, currency=currency)
+        # price = uniswap.getCoinPrice()
+        # price = api.getCoinPrice(coinID=coin, currency=currency)
 
         # assigning emoji with respected price action
         if oldPrice is None or oldPrice == price:
@@ -51,9 +52,9 @@ def printPriceEveryTenSeconds(coin:str, currency:str="usd", tillTime:int=5):
         tillTime -= 10
 
 
-class Prediction(GeckoAPI, PredictoData, PredictoUser):
+class Prediction(PredictoData, PredictoUser):
 
-    COIN_IDS = ["bitcoin", "ethereum", "binancecoin", "solana", "dogecoin", "ripple", "cardano", "matic-network"]
+    COIN_IDS = ["btc", "eth", "bnb", "sol", "doge", "xrp", "ada", "matic"]
     CURRENCIES = ["usd"]
     TIMEFRAMES = [5, 10, 15, 30, 45, 60]
 
@@ -62,7 +63,7 @@ class Prediction(GeckoAPI, PredictoData, PredictoUser):
         # super(PredictoUser, self).__init__(userID)
         PredictoUser.__init__(self, self.userID)
         # super(GeckoAPI, self).__init__()
-        GeckoAPI.__init__(self)
+        # GeckoAPI.__init__(self)
         # super(PredictoData, self).__init__()
         PredictoData.__init__(self)
 
@@ -82,7 +83,9 @@ class Prediction(GeckoAPI, PredictoData, PredictoUser):
             return {"error": "invalid time frame"}
         else:
             # all test passed so moving on prediction
-            oldPrice = self.getCoinPrice(coin, currency) #price at which user predicted
+            # oldPrice = uniswap.getCoinPrice()
+            oldPrice = cryotocompare.getCoinPrice(coin=coin, currency=currency)
+            # oldPrice = self.getCoinPrice(coin, currency) #price at which user predicted
             startTime = datetime.now() # prediction time
 
             direction = 'UP' if up else 'DOWN' # direction of prediction up or down
@@ -91,7 +94,7 @@ class Prediction(GeckoAPI, PredictoData, PredictoUser):
             print(f"You predicted {direction} for upcoming {timeframe} minutes\nLet's see what happens...")
 
             # prediction data schema
-            pairName = f'{coin}/{currency}'
+            pairName = f'{coin}/{currency}'.upper()
             data = {
                 "from_user" : self.id,
                 "pair" : pairName,
@@ -117,7 +120,9 @@ class Prediction(GeckoAPI, PredictoData, PredictoUser):
             # time*60 because sleep method takes time in seconds
             time.sleep(timeframe*60)
             endTime = datetime.now()
-            newPrice = self.getCoinPrice(coin, currency)
+            # newPrice = self.getCoinPrice(coin, currency)
+            # newPrice = uniswap.getCoinPrice()
+            newPrice = cryotocompare.getCoinPrice(coin=coin, currency=currency)
             print(f'[{startTime:%H:%M:%S}]: {coin}/{currency} = {newPrice}')
 
             priceChange = newPrice - oldPrice
@@ -154,5 +159,3 @@ class Prediction(GeckoAPI, PredictoData, PredictoUser):
             # data["id"] = str(predictionId)
 
             return data # returning finalized data
-
-
